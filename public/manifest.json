@@ -1,6 +1,8 @@
 {
     "name": "Smart Timetable",
     "short_name": "Timetable",
+    "id": "/",
+    "scope": "/",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#121212",
