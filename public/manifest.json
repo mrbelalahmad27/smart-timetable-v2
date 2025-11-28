@@ -1,0 +1,20 @@
+{
+    "name": "Smart Timetable",
+    "short_name": "Timetable",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#121212",
+    "theme_color": "#4db6ac",
+    "icons": [
+        {
+            "src": "/app-icon.jpg",
+            "sizes": "192x192",
+            "type": "image/jpeg"
+        },
+        {
+            "src": "/app-icon.jpg",
+            "sizes": "512x512",
+            "type": "image/jpeg"
+        }
+    ]
+}
