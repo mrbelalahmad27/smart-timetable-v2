@@ -156,9 +156,9 @@ const ScheduleView = ({ events, onAddClick, onSettingsClick, onEventClick, onDel
         console.log(`Swipe: X=${diffX}, Y=${diffY}`); // Debugging
 
         // Check for horizontal swipe (right) and ensure it's not a vertical scroll
-        // diffX > 50 means swipe right
-        // Relaxed Y threshold to 50 to be more forgiving
-        if (diffX > 50 && Math.abs(diffY) < 50) {
+        // diffX > 80 means swipe right (increased from 50)
+        // Stricter Y threshold (30) to prevent accidental swipes while scrolling
+        if (diffX > 80 && Math.abs(diffY) < 30) {
             console.log('Swipe Right Detected -> Notes');
             onEventClick(event, 'notes');
         } else if (Math.abs(diffX) < 10 && Math.abs(diffY) < 10) {
