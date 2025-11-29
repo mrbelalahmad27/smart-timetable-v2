@@ -3,6 +3,7 @@ import ScheduleView from './components/ScheduleView';
 import AddEventView from './components/AddEventView';
 import SettingsView from './components/SettingsView';
 import LoginView from './components/LoginView';
+import InstallPrompt from './components/InstallPrompt';
 import { Capacitor } from '@capacitor/core';
 import { playNotificationSound, initAudio } from './utils/sound';
 import { scheduleNotification } from './utils/notifications';
@@ -232,6 +233,9 @@ function App() {
                         onClose={() => setCurrentView('schedule')}
                     />
                 )}
+
+                {/* Install Prompt for PWA */}
+                <InstallPrompt />
             </div>
         </div>
     );

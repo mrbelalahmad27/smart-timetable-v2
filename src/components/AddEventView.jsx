@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { X, ChevronRight, Bell, Trash2, Link as LinkIcon, FileText, Upload, Plus } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, ChevronRight, Bell, Trash2, Link as LinkIcon, Plus, PenTool, Type, Eraser, Undo, Redo } from 'lucide-react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import { ReactSketchCanvas } from 'react-sketch-canvas';
 
 const COLORS = [
     '#ef5350', // Red
@@ -24,7 +27,10 @@ const REPEAT_OPTIONS = ['Never', 'Daily', 'Weekly', 'Bi-weekly', 'Monthly'];
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const AddEventView = ({ onClose, onAdd, onDelete, initialData }) => {
-    const [activeTab, setActiveTab] = useState('details'); // 'details' | 'links' | 'files'
+    const [activeTab, setActiveTab] = useState('details'); // 'details' | 'links' | 'notes'
+    const [noteMode, setNoteMode] = useState('text'); // 'text' | 'draw'
+    const canvasRef = useRef(null);
+
     const [formData, setFormData] = useState(initialData || {
         subject: '',
         type: '',
@@ -38,8 +44,13 @@ const AddEventView = ({ onClose, onAdd, onDelete, initialData }) => {
         color: '#4db6ac',
         reminders: [],
         links: [],
-        files: []
+        notes: { text: '', drawing: null }
     });
+
+    // Ensure notes object exists if opening old event
+    if (!formData.notes) {
+        formData.notes = { text: '', drawing: null };
+    }
 
     const [showColorPicker, setShowColorPicker] = useState(false);
     const [showRepeatOptions, setShowRepeatOptions] = useState(false);
@@ -51,12 +62,26 @@ const AddEventView = ({ onClose, onAdd, onDelete, initialData }) => {
     const [showLinkInput, setShowLinkInput] = useState(false);
     const [newLinkText, setNewLinkText] = useState('');
 
-    const [showFileInput, setShowFileInput] = useState(false);
-    const [newFileText, setNewFileText] = useState('');
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleNoteChange = (content) => {
+        setFormData(prev => ({
+            ...prev,
+            notes: { ...prev.notes, text: content }
+        }));
+    };
+
+    const handleDrawingChange = async () => {
+        if (canvasRef.current) {
+            const path = await canvasRef.current.exportPaths();
+            setFormData(prev => ({
+                ...prev,
+                notes: { ...prev.notes, drawing: path }
+            }));
+        }
     };
 
     const handleSubmit = () => {
@@ -100,17 +125,6 @@ const AddEventView = ({ onClose, onAdd, onDelete, initialData }) => {
             }));
             setNewLinkText('');
             setShowLinkInput(false);
-        }
-    };
-
-    const handleAddFile = () => {
-        if (newFileText.trim()) {
-            setFormData(prev => ({
-                ...prev,
-                files: [...prev.files, newFileText]
-            }));
-            setNewFileText('');
-            setShowFileInput(false);
         }
     };
 
@@ -238,10 +252,10 @@ const AddEventView = ({ onClose, onAdd, onDelete, initialData }) => {
                     </button>
                     <button
                         type="button"
-                        onClick={() => setActiveTab('files')}
-                        className={`py-3 rounded font-medium transition-colors ${activeTab === 'files' ? 'bg-white/10 text-white' : 'bg-card text-textMuted hover:bg-cardLight'}`}
+                        onClick={() => setActiveTab('notes')}
+                        className={`py-3 rounded font-medium transition-colors ${activeTab === 'notes' ? 'bg-white/10 text-white' : 'bg-card text-textMuted hover:bg-cardLight'}`}
                     >
-                        Files ({formData.files.length})
+                        Notes
                     </button>
                 </div>
 
@@ -465,58 +479,83 @@ const AddEventView = ({ onClose, onAdd, onDelete, initialData }) => {
                         ))}
                     </div>
                 ) : (
-                    <div className="space-y-4">
-                        {showFileInput ? (
-                            <div className="flex gap-2 animate-slide-in">
-                                <input
-                                    type="text"
-                                    value={newFileText}
-                                    onChange={(e) => setNewFileText(e.target.value)}
-                                    placeholder="File name (e.g. notes.pdf)"
-                                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent"
-                                    autoFocus
-                                />
-                                <button
-                                    onClick={handleAddFile}
-                                    className="bg-accent text-black font-bold px-4 rounded-lg"
-                                    style={{ backgroundColor: formData.color }}
-                                    type="button"
-                                >
-                                    Add
-                                </button>
-                                <button
-                                    onClick={() => setShowFileInput(false)}
-                                    className="bg-white/10 text-white px-4 rounded-lg"
-                                    type="button"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
-                        ) : (
+                    <div className="flex flex-col h-full">
+                        {/* Notes Toolbar */}
+                        <div className="flex items-center justify-center bg-white/5 p-2 rounded-lg mb-4 gap-2">
                             <button
-                                onClick={() => setShowFileInput(true)}
-                                className="w-full py-3 bg-white/5 text-white rounded-lg hover:bg-white/10 flex items-center justify-center space-x-2"
+                                onClick={() => setNoteMode('text')}
+                                className={`flex items-center px-4 py-2 rounded-lg transition-colors ${noteMode === 'text' ? 'bg-accent text-black' : 'text-textMuted hover:text-white'}`}
+                                style={{ backgroundColor: noteMode === 'text' ? formData.color : undefined }}
                                 type="button"
                             >
-                                <Upload size={20} />
-                                <span>Upload File</span>
+                                <Type size={18} className="mr-2" />
+                                Text
                             </button>
-                        )}
-                        {formData.files.map((file, i) => (
-                            <div key={i} className="bg-card p-3 rounded-lg flex items-center justify-between">
-                                <div className="flex items-center space-x-3 overflow-hidden">
-                                    <FileText size={16} className="text-textMuted flex-shrink-0" />
-                                    <span className="text-white truncate">{file}</span>
+                            <button
+                                onClick={() => setNoteMode('draw')}
+                                className={`flex items-center px-4 py-2 rounded-lg transition-colors ${noteMode === 'draw' ? 'bg-accent text-black' : 'text-textMuted hover:text-white'}`}
+                                style={{ backgroundColor: noteMode === 'draw' ? formData.color : undefined }}
+                                type="button"
+                            >
+                                <PenTool size={18} className="mr-2" />
+                                Draw
+                            </button>
+                        </div>
+
+                        {/* Editor Area */}
+                        <div className="flex-1 bg-white rounded-lg overflow-hidden text-black min-h-[400px] relative">
+                            {noteMode === 'text' ? (
+                                <ReactQuill
+                                    theme="snow"
+                                    value={formData.notes.text}
+                                    onChange={handleNoteChange}
+                                    className="h-full"
+                                    modules={{
+                                        toolbar: [
+                                            ['bold', 'italic', 'underline', 'strike'],
+                                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                                            [{ 'color': [] }, { 'background': [] }],
+                                            ['clean']
+                                        ]
+                                    }}
+                                />
+                            ) : (
+                                <div className="h-full w-full relative">
+                                    <ReactSketchCanvas
+                                        ref={canvasRef}
+                                        strokeWidth={4}
+                                        strokeColor="black"
+                                        canvasColor="transparent"
+                                        className="h-full w-full"
+                                        onChange={handleDrawingChange}
+                                        defaultPaths={formData.notes.drawing || []}
+                                    />
+                                    <div className="absolute top-2 right-2 flex gap-2">
+                                        <button
+                                            onClick={() => canvasRef.current?.undo()}
+                                            className="p-2 bg-white shadow rounded-full hover:bg-gray-100"
+                                            type="button"
+                                        >
+                                            <Undo size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => canvasRef.current?.redo()}
+                                            className="p-2 bg-white shadow rounded-full hover:bg-gray-100"
+                                            type="button"
+                                        >
+                                            <Redo size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => canvasRef.current?.clearCanvas()}
+                                            className="p-2 bg-white shadow rounded-full hover:bg-gray-100 text-red-500"
+                                            type="button"
+                                        >
+                                            <Eraser size={16} />
+                                        </button>
+                                    </div>
                                 </div>
-                                <button
-                                    onClick={() => setFormData(prev => ({ ...prev, files: prev.files.filter((_, idx) => idx !== i) }))}
-                                    className="text-textMuted hover:text-[#ef5350]"
-                                    type="button"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        ))}
+                            )}
+                        </div>
                     </div>
                 )}
             </main >
