@@ -115,8 +115,6 @@ const ScheduleView = ({ events, onAddClick, onSettingsClick, onEventClick, onDel
         }
     };
 
-    // Helper to format time in 12-hour format (Removed, imported from utils)
-
     // Force update every minute to refresh countdowns
     const [, setTick] = useState(0);
     useEffect(() => {
@@ -139,17 +137,38 @@ const ScheduleView = ({ events, onAddClick, onSettingsClick, onEventClick, onDel
     // Long press logic
     const [longPressTimer, setLongPressTimer] = useState(null);
 
-    const handleTouchStart = (event) => {
+    const handleTouchStart = (event, e) => {
+        // Store start coordinates for swipe detection
+        e.currentTarget.dataset.startX = e.touches[0].clientX;
+        e.currentTarget.dataset.startY = e.touches[0].clientY;
+
         const timer = setTimeout(() => {
             setEventToDelete(event);
         }, 800); // 800ms for long press
         setLongPressTimer(timer);
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEnd = (event, e) => {
         if (longPressTimer) {
             clearTimeout(longPressTimer);
             setLongPressTimer(null);
+        }
+
+        // Swipe Detection
+        const startX = parseFloat(e.currentTarget.dataset.startX);
+        const startY = parseFloat(e.currentTarget.dataset.startY);
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        const diffX = endX - startX;
+        const diffY = endY - startY;
+
+        // Check for horizontal swipe (right) and ensure it's not a vertical scroll
+        // diffX > 50 means swipe right
+        if (diffX > 50 && Math.abs(diffY) < 30) {
+            onEventClick(event, 'notes');
+        } else if (Math.abs(diffX) < 10 && Math.abs(diffY) < 10) {
+            // Treat as click if movement is minimal
+            onEventClick(event, 'details');
         }
     };
 
@@ -258,25 +277,26 @@ const ScheduleView = ({ events, onAddClick, onSettingsClick, onEventClick, onDel
                                 return (
                                     <div
                                         key={index}
-                                        onClick={() => onEventClick && onEventClick(event)}
+                                        onClick={() => onEventClick && onEventClick(event, 'details')}
                                         onDoubleClick={(e) => {
                                             e.stopPropagation();
                                             setEventToDelete(event);
                                         }}
-                                        onTouchStart={() => handleTouchStart(event)}
-                                        onTouchEnd={handleTouchEnd}
-                                        onMouseDown={() => handleTouchStart(event)} // Also support long click on desktop
-                                        onMouseUp={handleTouchEnd}
-                                        onMouseLeave={handleTouchEnd}
-                                        className="bg-card p-4 rounded-lg border-l-4 shadow-md cursor-pointer hover:bg-cardLight transition-colors select-none"
+                                        onTouchStart={(e) => handleTouchStart(event, e)}
+                                        onTouchEnd={(e) => handleTouchEnd(event, e)}
+                                        className="bg-card p-4 rounded-lg border-l-4 shadow-md cursor-pointer hover:bg-cardLight transition-colors select-none relative group overflow-hidden"
                                         style={{ borderLeftColor: event.color || '#4db6ac' }}
                                     >
                                         <div className="flex justify-between items-start">
-                                            <h3 className="text-white font-bold text-lg">{event.subject}</h3>
+                                            <div>
+                                                <h3 className="text-white font-bold text-lg">{event.subject}</h3>
+                                                <p className="text-textMuted text-sm">{formatTime12Hour(event.startTime)} - {formatTime12Hour(event.endTime)}</p>
+                                                <div className="flex items-center mt-1 text-xs text-textMuted space-x-2">
+                                                    <span>{event.building}</span>
+                                                    {event.room && <span>• Room {event.room}</span>}
+                                                </div>
+                                            </div>
                                             <div className="flex flex-col items-end">
-                                                <span className="text-sm font-medium bg-black/20 px-2 py-1 rounded mb-1" style={{ color: event.color || '#4db6ac' }}>
-                                                    {formatTime12Hour(event.startTime)} - {formatTime12Hour(event.endTime)}
-                                                </span>
                                                 {status && (
                                                     <span className={`text-xs font-bold ${status === 'In Progress' ? 'text-green-400 animate-pulse' :
                                                         status === 'Finished' ? 'text-textMuted' : 'text-accent'
@@ -287,7 +307,6 @@ const ScheduleView = ({ events, onAddClick, onSettingsClick, onEventClick, onDel
                                             </div>
                                         </div>
                                         <div className="flex justify-between mt-1 text-sm text-textMuted">
-                                            <span>{event.building} {event.room && `- ${event.room}`}</span>
                                             <span style={{ color: event.color || '#4db6ac' }}>{event.type}</span>
                                         </div>
                                         {event.teacher && (
@@ -304,24 +323,25 @@ const ScheduleView = ({ events, onAddClick, onSettingsClick, onEventClick, onDel
                                                 ))}
                                             </div>
                                         )}
+
+                                        {/* Swipe Hint Overlay */}
+                                        <div className="absolute inset-y-0 right-0 w-1 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </div>
                                 );
                             })}
-                        </div >
+                        </div>
                     )}
-                </div >
-            </main >
-
-
+                </div>
+            </main>
 
             {/* Floating Action Button */}
-            < button
+            <button
                 onClick={onAddClick}
                 className="absolute bottom-24 right-6 w-14 h-14 bg-accent rounded-2xl flex items-center justify-center shadow-lg hover:bg-opacity-90 transition-all z-20"
             >
                 <Plus size={32} className="text-white" />
-            </button >
-        </div >
+            </button>
+        </div>
     );
 };
 

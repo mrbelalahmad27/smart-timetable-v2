@@ -26,8 +26,8 @@ const COLORS = [
 const REPEAT_OPTIONS = ['Never', 'Daily', 'Weekly', 'Bi-weekly', 'Monthly'];
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-const AddEventView = ({ onClose, onAdd, onDelete, initialData }) => {
-    const [activeTab, setActiveTab] = useState('details'); // 'details' | 'links' | 'notes'
+const AddEventView = ({ onClose, onAdd, onDelete, initialData, initialTab = 'details' }) => {
+    const [activeTab, setActiveTab] = useState(initialTab); // 'details' | 'links' | 'notes'
     const [noteMode, setNoteMode] = useState('text'); // 'text' | 'draw'
     const canvasRef = useRef(null);
 
