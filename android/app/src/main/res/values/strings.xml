@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SmartTimetable</string>
+    <string name="title_activity_main">SmartTimetable</string>
+    <string name="package_name">com.smarttimetable.app</string>
+    <string name="custom_url_scheme">com.smarttimetable.app</string>
+</resources>

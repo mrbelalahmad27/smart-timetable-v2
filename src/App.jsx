@@ -3,7 +3,10 @@ import ScheduleView from './components/ScheduleView';
 import AddEventView from './components/AddEventView';
 import SettingsView from './components/SettingsView';
 import LoginView from './components/LoginView';
+import { Capacitor } from '@capacitor/core';
 import { playNotificationSound, initAudio } from './utils/sound';
+import { scheduleNotification } from './utils/notifications';
+import { getNextOccurrence } from './utils/time';
 
 const DEFAULT_THEME = { name: 'Teal', primary: '#4db6ac', bg: '#121212', card: '#1e1e1e', cardLight: '#2c2c2c' };
 
@@ -35,6 +38,30 @@ function App() {
     useEffect(() => {
         if (currentUser) {
             localStorage.setItem(`app-events-${currentUser}`, JSON.stringify(events));
+
+            // Schedule Native Notifications (Android)
+            if (Capacitor.isNativePlatform()) {
+                events.forEach(event => {
+                    const nextDate = getNextOccurrence(event);
+                    if (nextDate && event.reminders) {
+                        event.reminders.forEach(reminder => {
+                            const offset = typeof reminder === 'object' ? reminder.value : 0;
+                            const triggerTime = new Date(nextDate.getTime() - offset * 60000);
+
+                            if (triggerTime > new Date()) {
+                                // Generate a safe 32-bit integer ID
+                                const safeId = (event.id + offset) % 2147483647;
+                                scheduleNotification(
+                                    safeId,
+                                    `Reminder: ${event.subject}`,
+                                    `Starts in ${offset} minutes at ${event.building || 'Class'}`,
+                                    triggerTime
+                                );
+                            }
+                        });
+                    }
+                });
+            }
         }
     }, [events, currentUser]);
 
@@ -51,7 +78,7 @@ function App() {
         }
     }, [theme, currentUser]);
 
-    // Check reminders
+    // Check reminders (Web Polling & In-App Sound)
     useEffect(() => {
         if (!currentUser) return;
 
@@ -76,21 +103,25 @@ function App() {
                             // Check if now is within the same minute as trigger time
                             if (now.getHours() === triggerTime.getHours() && now.getMinutes() === triggerTime.getMinutes() && now.getSeconds() === 0) {
                                 playNotificationSound();
-                                if (Notification.permission === 'granted') {
-                                    if ('serviceWorker' in navigator) {
-                                        navigator.serviceWorker.ready.then(registration => {
-                                            registration.showNotification(`Reminder: ${event.subject}`, {
-                                                body: `Starts in ${offset} minutes at ${event.building || 'Class'}`,
-                                                icon: '/vite.svg', // Optional icon
-                                                vibrate: [200, 100, 200],
-                                                requireInteraction: true,
-                                                tag: `reminder-${event.id}-${triggerTime.getTime()}` // Prevent duplicate notifications
+
+                                // Only show Web Notification if NOT native (Native handles it via scheduling)
+                                if (!Capacitor.isNativePlatform()) {
+                                    if (Notification.permission === 'granted') {
+                                        if ('serviceWorker' in navigator) {
+                                            navigator.serviceWorker.ready.then(registration => {
+                                                registration.showNotification(`Reminder: ${event.subject}`, {
+                                                    body: `Starts in ${offset} minutes at ${event.building || 'Class'}`,
+                                                    icon: '/vite.svg', // Optional icon
+                                                    vibrate: [200, 100, 200],
+                                                    requireInteraction: true,
+                                                    tag: `reminder-${event.id}-${triggerTime.getTime()}` // Prevent duplicate notifications
+                                                });
                                             });
-                                        });
-                                    } else {
-                                        new Notification(`Reminder: ${event.subject}`, {
-                                            body: `Starts in ${offset} minutes at ${event.building || 'Class'}`
-                                        });
+                                        } else {
+                                            new Notification(`Reminder: ${event.subject}`, {
+                                                body: `Starts in ${offset} minutes at ${event.building || 'Class'}`
+                                            });
+                                        }
                                     }
                                 }
                             }
@@ -102,7 +133,7 @@ function App() {
 
         const interval = setInterval(checkReminders, 1000);
 
-        if (Notification.permission === 'default') {
+        if (Notification.permission === 'default' && !Capacitor.isNativePlatform()) {
             Notification.requestPermission();
         }
 

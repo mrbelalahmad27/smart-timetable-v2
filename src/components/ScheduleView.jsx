@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, Calendar, Check, Plus, Settings, User, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { formatTime12Hour, getTimeRemaining } from '../utils/time';
 
 const Sidebar = ({ isOpen, onClose, onSettingsClick, currentUser, onLogout }) => {
     return (
@@ -114,67 +115,7 @@ const ScheduleView = ({ events, onAddClick, onSettingsClick, onEventClick, onDel
         }
     };
 
-    // Helper to format time in 12-hour format
-    const formatTime12Hour = (timeString) => {
-        if (!timeString) return '';
-        const [hours, minutes] = timeString.split(':').map(Number);
-        const period = hours >= 12 ? 'PM' : 'AM';
-        const hours12 = hours % 12 || 12;
-        return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
-    };
-
-    // Helper to calculate time remaining
-    const getTimeRemaining = (event, eventDate) => {
-        if (!event.startTime) return null;
-
-        const now = new Date();
-        const [hours, minutes] = event.startTime.split(':').map(Number);
-        const start = new Date(eventDate);
-        start.setHours(hours, minutes, 0, 0);
-
-        const diff = start - now;
-
-        if (diff < 0) {
-            // Check if it's currently happening (assuming 45 min duration if no end time, or use end time)
-            const [endHours, endMinutes] = event.endTime ? event.endTime.split(':').map(Number) : [hours + 1, minutes];
-            const end = new Date(eventDate);
-            end.setHours(endHours, endMinutes, 0, 0);
-
-            if (now < end) return "In Progress";
-
-            // Calculate next occurrence for repeating events
-            if (event.repeat === 'Daily') {
-                const nextStart = new Date(start);
-                nextStart.setDate(start.getDate() + 1);
-                const nextDiff = nextStart - now;
-
-                if (nextDiff > 0) {
-                    const days = Math.floor(nextDiff / (1000 * 60 * 60 * 24));
-                    const hrs = Math.floor((nextDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    return `Next: ${days > 0 ? `${days}d ` : ''}${hrs}h`;
-                }
-            } else if (event.repeat === 'Weekly') {
-                const nextStart = new Date(start);
-                nextStart.setDate(start.getDate() + 7);
-                const nextDiff = nextStart - now;
-
-                if (nextDiff > 0) {
-                    const days = Math.floor(nextDiff / (1000 * 60 * 60 * 24));
-                    const hrs = Math.floor((nextDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    return `Next: ${days}d ${hrs}h`;
-                }
-            }
-
-            return "Finished";
-        }
-
-        const diffHrs = Math.floor(diff / (1000 * 60 * 60));
-        const diffMins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-        if (diffHrs > 24) return `Starts in ${Math.floor(diffHrs / 24)} days`;
-        if (diffHrs > 0) return `Starts in ${diffHrs}h ${diffMins}m`;
-        return `Starts in ${diffMins}m`;
-    };
+    // Helper to format time in 12-hour format (Removed, imported from utils)
 
     // Force update every minute to refresh countdowns
     const [, setTick] = useState(0);
@@ -252,14 +193,36 @@ const ScheduleView = ({ events, onAddClick, onSettingsClick, onEventClick, onDel
             )}
 
             {/* Header */}
-            <header className="flex items-center p-4 pt-6">
-                <button
-                    className="text-white mr-4 hover:bg-white/10 p-1 rounded-full transition-colors"
-                    onClick={() => setIsMenuOpen(true)}
-                >
-                    <Menu size={24} />
-                </button>
-                <h1 className="text-xl font-bold text-white">Schedule</h1>
+            <header className="flex flex-col p-4 pt-6">
+                <div className="flex items-center mb-2">
+                    <button
+                        className="text-white mr-4 hover:bg-white/10 p-1 rounded-full transition-colors"
+                        onClick={() => setIsMenuOpen(true)}
+                    >
+                        <Menu size={24} />
+                    </button>
+                    <h1 className="text-xl font-bold text-white">Schedule</h1>
+                </div>
+
+                {/* Calendar Picker */}
+                <div className="relative">
+                    <input
+                        type="date"
+                        id="date-picker"
+                        className="absolute opacity-0 w-full h-full cursor-pointer z-10"
+                        onChange={(e) => {
+                            if (e.target.value) {
+                                const [year, month, day] = e.target.value.split('-').map(Number);
+                                const newDate = new Date(year, month - 1, day);
+                                onDateChange(newDate);
+                            }
+                        }}
+                    />
+                    <button className="flex items-center text-accent font-medium text-sm bg-white/5 px-3 py-2 rounded-lg w-full hover:bg-white/10 transition-colors">
+                        <Calendar size={16} className="mr-2" />
+                        <span>Select Date</span>
+                    </button>
+                </div>
             </header>
 
             {/* Date Row with Navigation */}
@@ -277,7 +240,7 @@ const ScheduleView = ({ events, onAddClick, onSettingsClick, onEventClick, onDel
             </div>
 
             {/* Main Content with Animation */}
-            <main className="flex-1 overflow-y-auto p-4 relative overflow-x-hidden">
+            <main className="flex-1 overflow-y-auto p-4 relative overflow-x-hidden pb-32">
                 <div
                     key={currentDate.toISOString()}
                     className={`min-h-full animate-slide-${direction === 0 ? 'in' : direction > 0 ? 'left' : 'right'}`}
@@ -354,7 +317,7 @@ const ScheduleView = ({ events, onAddClick, onSettingsClick, onEventClick, onDel
             {/* Floating Action Button */}
             < button
                 onClick={onAddClick}
-                className="absolute bottom-6 right-6 w-14 h-14 bg-accent rounded-2xl flex items-center justify-center shadow-lg hover:bg-opacity-90 transition-all z-20"
+                className="absolute bottom-24 right-6 w-14 h-14 bg-accent rounded-2xl flex items-center justify-center shadow-lg hover:bg-opacity-90 transition-all z-20"
             >
                 <Plus size={32} className="text-white" />
             </button >
