@@ -9,12 +9,12 @@ createRoot(document.getElementById('root')).render(
     </StrictMode>,
 )
 
+// FORCE UNREGISTER SERVICE WORKER (To fix caching issues)
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/firebase-messaging-sw.js').then(registration => {
-            console.log('SW registered: ', registration);
-        }).catch(registrationError => {
-            console.log('SW registration failed: ', registrationError);
-        });
+    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (let registration of registrations) {
+            console.log('Unregistering SW:', registration);
+            registration.unregister();
+        }
     });
 }
