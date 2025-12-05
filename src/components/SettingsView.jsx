@@ -236,7 +236,7 @@ const SettingsView = ({ preferences, onUpdatePreferences, theme, onUpdateTheme, 
             toast.success('Telegram connected successfully!');
         } catch (error) {
             console.error('Failed to save Telegram ID:', error);
-            toast.error('Failed to connect Telegram');
+            toast.error(`Failed: ${error.message || 'Unknown error'}`);
         } finally {
             setLoadingTelegram(false);
         }

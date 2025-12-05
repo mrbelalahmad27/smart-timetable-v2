@@ -91,6 +91,34 @@ function App() {
         return () => subscription?.subscription?.unsubscribe();
     }, []);
 
+    // Listen for Deep Links (Google Auth)
+    useEffect(() => {
+        import('@capacitor/app').then(({ App }) => {
+            App.addListener('appUrlOpen', async (data) => {
+                console.log('App opened with URL:', data.url);
+                try {
+                    const url = new URL(data.url);
+                    // Check if it's our auth callback
+                    if (url.host === 'google-auth' && url.hash) {
+                        const params = new URLSearchParams(url.hash.substring(1));
+                        const access_token = params.get('access_token');
+                        const refresh_token = params.get('refresh_token');
+
+                        if (access_token && refresh_token) {
+                            await import('./services/supabase').then(m => m.supabase.auth.setSession({
+                                access_token,
+                                refresh_token
+                            }));
+                            toast.success('Successfully signed in with Google!');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error handling deep link:', e);
+                }
+            });
+        });
+    }, []);
+
     // Listen for Notification Triggers (from notifications.js)
     useEffect(() => {
         const handleNotificationTrigger = (event) => {

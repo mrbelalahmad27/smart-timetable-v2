@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { Capacitor } from '@capacitor/core';
 
 export const authService = {
     signIn: async (email, password) => {
@@ -23,8 +24,15 @@ export const authService = {
     },
 
     signInWithGoogle: async () => {
+        const redirectTo = Capacitor.isNativePlatform()
+            ? 'com.smarttimetable.app://google-auth'
+            : window.location.origin;
+
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
+            options: {
+                redirectTo
+            }
         });
         return { data, error };
     },
