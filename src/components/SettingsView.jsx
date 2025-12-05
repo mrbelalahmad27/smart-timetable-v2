@@ -3,6 +3,7 @@ import { X, Moon, Sun, Volume2, VolumeX, Download, Upload, RefreshCw, Bell, Glob
 import { playNotificationSound } from '../utils/sound';
 import { notificationManager } from '../services/notificationManager';
 import { toast } from 'react-hot-toast';
+import { supabase } from '../services/supabase';
 
 const THEMES = [
     { name: 'Teal', color: '#00bcd4', id: 'teal' },
@@ -217,20 +218,19 @@ const SettingsView = ({ preferences, onUpdatePreferences, theme, onUpdateTheme, 
     const handleSaveTelegram = async () => {
         setLoadingTelegram(true);
         try {
-            const { data: { user } } = await import('../services/supabase').then(m => m.supabase.auth.getUser());
+            const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                 toast.error('You must be logged in');
                 return;
             }
 
-            const { error } = await import('../services/supabase').then(m => m.supabase
+            const { error } = await supabase
                 .from('profiles')
                 .upsert({
                     id: user.id,
                     telegram_chat_id: telegramChatId,
                     updated_at: new Date().toISOString()
-                })
-            );
+                });
 
             if (error) throw error;
             toast.success('Telegram connected successfully!');
