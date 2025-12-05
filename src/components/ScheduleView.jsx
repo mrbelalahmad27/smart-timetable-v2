@@ -386,9 +386,9 @@ const ScheduleView = ({ events = [], tasks = [], habits = [], preferences, onUpd
                 onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
 
                 {/* Schedule Tab */}
-                <div style={{ display: currentTab === 'schedule' ? 'flex' : 'none', paddingTop: 'calc(3.5rem + env(safe-area-inset-top))' }} className="flex-1 flex flex-col overflow-y-auto no-scrollbar overscroll-y-none pb-32">
+                <div style={{ display: currentTab === 'schedule' ? 'flex' : 'none', paddingTop: 'calc(3rem + env(safe-area-inset-top))' }} className="flex-1 flex flex-col overflow-y-auto no-scrollbar overscroll-y-none pb-32">
                     {/* Floating Header Pill (Attached to Top) */}
-                    <div style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }} className="fixed top-0 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-1">
+                    <div style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }} className="fixed top-0 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-1">
                         <div className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-2 pl-4 pr-2 shadow-xl flex items-center justify-between backdrop-blur-md bg-opacity-95">
                             <div className="flex items-center gap-2">
                                 <button onClick={() => setIsMenuOpen(true)} className="text-white/70 hover:text-white transition-colors active:scale-95 p-1">
@@ -584,7 +584,7 @@ const ScheduleView = ({ events = [], tasks = [], habits = [], preferences, onUpd
             </div>
 
             {/* Floating Bottom Navigation (The "Pill") */}
-            <div style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))' }} className="absolute left-1/2 transform -translate-x-1/2 z-50 w-[90%] max-w-md">
+            <div style={{ bottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }} className="absolute left-1/2 transform -translate-x-1/2 z-50 w-[90%] max-w-md">
                 <div className="bg-[#1E1E1E]/90 backdrop-blur-2xl border border-white/10 rounded-3xl p-2 shadow-2xl shadow-black/50 flex items-center justify-between px-6 ring-1 ring-white/5">
                     <button
                         onClick={() => onTabChange('schedule')}
