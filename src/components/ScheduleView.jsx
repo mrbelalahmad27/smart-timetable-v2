@@ -386,9 +386,9 @@ const ScheduleView = ({ events = [], tasks = [], habits = [], preferences, onUpd
                 onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
 
                 {/* Schedule Tab */}
-                <div style={{ display: currentTab === 'schedule' ? 'flex' : 'none', paddingTop: 'calc(3rem + env(safe-area-inset-top))' }} className="flex-1 flex flex-col overflow-y-auto no-scrollbar overscroll-y-none pb-32">
+                <div style={{ display: currentTab === 'schedule' ? 'flex' : 'none', paddingTop: 'calc(4rem + env(safe-area-inset-top))' }} className="flex-1 flex flex-col overflow-y-auto no-scrollbar overscroll-y-none pb-32">
                     {/* Floating Header Pill (Attached to Top) */}
-                    <div style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }} className="fixed top-0 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-1">
+                    <div style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }} className="fixed top-0 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-1">
                         <div className="bg-[#1E1E1E] border border-white/10 rounded-2xl p-2 pl-4 pr-2 shadow-xl flex items-center justify-between backdrop-blur-md bg-opacity-95">
                             <div className="flex items-center gap-2">
                                 <button onClick={() => setIsMenuOpen(true)} className="text-white/70 hover:text-white transition-colors active:scale-95 p-1">
